@@ -1,0 +1,72 @@
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.value.default.type: com.mishkin.nietzschenator.messaging.event.StatsReadyEvent
+        spring.json.trusted.packages: com.mishkin.nietzschenator.messaging.event
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+
+gigachat:
+  auth-url: ${GIGACHAT_AUTH_URL}
+  base-url: ${GIGACHAT_BASE_URL}
+  authorization-key: ${GIGACHAT_AUTH_KEY}
+  scope: ${GIGACHAT_SCOPE}
+
+
+server:
+  port: 8081
+
+resilience4j:
+
+  circuitbreaker:
+    instances:
+      gigachat:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
+  retry:
+    instances:
+      gigachat:
+        maxAttempts: 3
+        waitDuration: 500ms
+        retryExceptions:
+          - java.io.IOException
+          - java.net.SocketTimeoutException
+        ignoreExceptions:
+          - java.lang.IllegalArgumentException
+
+  timelimiter:
+    instances:
+      gigachat:
+        timeoutDuration: 5s
+        cancelRunningFuture: true
+
+  thread-pool-bulkhead:
+    instances:
+      gigachat:
+        coreThreadPoolSize: 2
+        maxThreadPoolSize: 4
+        queueCapacity: 20
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
+
+logging:
+  level:
+    io.github.resilience4j.circuitbreaker: DEBUG

@@ -1,0 +1,7 @@
+keytool -importcert `
+  -alias russian-trusted-root `
+  -file src/main/resources/certs/russian_trusted_root_ca.cer `
+  -keystore src/main/resources/certs/truststore.p12 `
+  -storetype PKCS12 `
+  -storepass changeit `
+  -noprompt
