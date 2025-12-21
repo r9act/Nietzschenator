@@ -7,6 +7,7 @@ import com.mishkin.nietzschenator.infrastructure.llm.gigachat.dto.request.GigaCh
 import com.mishkin.nietzschenator.infrastructure.llm.gigachat.dto.response.GigaChatModelsResponse;
 import com.mishkin.nietzschenator.infrastructure.llm.gigachat.dto.request.GigaChatRequest;
 import com.mishkin.nietzschenator.infrastructure.llm.gigachat.dto.response.GigaChatResponse;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
@@ -48,6 +49,7 @@ public class GigaChatClientAdapter implements LlmClient {
     @CircuitBreaker(name = "gigachat", fallbackMethod = "fallback")
     @Retry(name = "gigachat")
     @TimeLimiter(name = "gigachat")
+    @Bulkhead(name = "gigachat", type = Bulkhead.Type.THREADPOOL)
     public CompletionStage<EnrichmentResult> generate(String prompt) {
 
         GigaChatRequest request = new GigaChatRequest(
