@@ -1,6 +1,7 @@
 package com.mishkin.nietzschenator.application.service;
 
 import com.mishkin.nietzschenator.application.port.out.LlmClient;
+import com.mishkin.nietzschenator.application.promptBuilder.PromptBuilder;
 import com.mishkin.nietzschenator.domain.model.EnrichmentResult;
 import com.mishkin.nietzschenator.messaging.event.StatsEnrichedEvent;
 import com.mishkin.nietzschenator.messaging.event.StatsReadyV1;
@@ -25,41 +26,31 @@ public class StatsEnrichmentService {
 
     private final LlmClient llmClient;
     private final StatsEnrichedProducer producer;
+    private final PromptBuilder<StatsReadyV1> v1PromptBuilder;
+    private final PromptBuilder<StatsReadyV2> v2PromptBuilder;
 
-    public StatsEnrichmentService(LlmClient llmClient, StatsEnrichedProducer producer) {
+    public StatsEnrichmentService(LlmClient llmClient, StatsEnrichedProducer producer, PromptBuilder<StatsReadyV1> v1PromptBuilder, PromptBuilder<StatsReadyV2> v2PromptBuilder) {
         this.llmClient = llmClient;
         this.producer = producer;
+        this.v1PromptBuilder = v1PromptBuilder;
+        this.v2PromptBuilder = v2PromptBuilder;
     }
 
     public CompletionStage<Void> processV1(StatsReadyV1 event) {
-
-        String prompt = TEST_PROMT.formatted(event.platformUserHandle());
-
-        return generateAndPublish(event.correlationId(), event.platformUserHandle(), prompt);
-    }
-
-    public CompletionStage<Void> processV2(StatsReadyV2 event) {
-
-        String prompt = promptFromStats(event);
-
-        return generateAndPublish(event.correlationId(), event.player().userHandle(), prompt);
-    }
-
-    private String promptFromStats(StatsReadyV2 event) {
-        // позже будет отдельный PromptBuilder
-        return """
-                Ты — Фридрих Ницше.
-                Игрок %s имеет ранг %d.
-                Всего матчей: %d, K/D: %.2f.
-                Выскажись философски.
-                """.formatted(
-                event.player().userHandle(),
-                event.careerRank().rank(),
-                event.total().matchesPlayed(),
-                event.total().kd()
+        return generateAndPublish(
+                event.correlationId(),
+                event.userHandle(),
+                v1PromptBuilder.build(event)
         );
     }
 
+    public CompletionStage<Void> processV2(StatsReadyV2 event) {
+        return generateAndPublish(
+                event.correlationId(),
+                event.player().userHandle(),
+                v2PromptBuilder.build(event)
+        );
+    }
 
     private CompletionStage<Void> generateAndPublish(String correlationId, String key, String prompt) {
         return llmClient.generate(prompt)
@@ -74,7 +65,7 @@ public class StatsEnrichmentService {
     }
 
     public CompletionStage<EnrichmentResult> processAndReturn(StatsReadyV1 event) {
-        String prompt = TEST_PROMT.formatted(event.platformUserHandle());
+        String prompt = TEST_PROMT.formatted(event.userHandle());
 
         return llmClient.generate(prompt);
     }

@@ -7,6 +7,6 @@ import java.time.Instant;
  */
 public record StatsReadyV1(
         String correlationId,
-        String platformUserHandle,
+        String userHandle,
         Instant occurredAt
 ) {}
