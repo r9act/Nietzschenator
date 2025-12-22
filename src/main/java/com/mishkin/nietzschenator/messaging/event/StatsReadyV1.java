@@ -5,7 +5,7 @@ import java.time.Instant;
 /**
  * @author a.mishkin
  */
-public record StatsReadyEvent(
+public record StatsReadyV1(
         String correlationId,
         String platformUserHandle,
         Instant occurredAt

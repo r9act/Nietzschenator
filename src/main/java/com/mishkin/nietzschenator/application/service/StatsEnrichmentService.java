@@ -3,7 +3,8 @@ package com.mishkin.nietzschenator.application.service;
 import com.mishkin.nietzschenator.application.port.out.LlmClient;
 import com.mishkin.nietzschenator.domain.model.EnrichmentResult;
 import com.mishkin.nietzschenator.messaging.event.StatsEnrichedEvent;
-import com.mishkin.nietzschenator.messaging.event.StatsReadyEvent;
+import com.mishkin.nietzschenator.messaging.event.StatsReadyV1;
+import com.mishkin.nietzschenator.messaging.event.StatsReadyV2;
 import com.mishkin.nietzschenator.messaging.producer.StatsEnrichedProducer;
 import org.springframework.stereotype.Service;
 
@@ -30,37 +31,49 @@ public class StatsEnrichmentService {
         this.producer = producer;
     }
 
-    public CompletionStage<Void> process(StatsReadyEvent event) {
+    public CompletionStage<Void> processV1(StatsReadyV1 event) {
 
         String prompt = TEST_PROMT.formatted(event.platformUserHandle());
 
+        return generateAndPublish(event.correlationId(), event.platformUserHandle(), prompt);
+    }
+
+    public CompletionStage<Void> processV2(StatsReadyV2 event) {
+
+        String prompt = promptFromStats(event);
+
+        return generateAndPublish(event.correlationId(), event.player().userHandle(), prompt);
+    }
+
+    private String promptFromStats(StatsReadyV2 event) {
+        // позже будет отдельный PromptBuilder
+        return """
+                Ты — Фридрих Ницше.
+                Игрок %s имеет ранг %d.
+                Всего матчей: %d, K/D: %.2f.
+                Выскажись философски.
+                """.formatted(
+                event.player().userHandle(),
+                event.careerRank().rank(),
+                event.total().matchesPlayed(),
+                event.total().kd()
+        );
+    }
+
+
+    private CompletionStage<Void> generateAndPublish(String correlationId, String key, String prompt) {
         return llmClient.generate(prompt)
                 .thenAccept(result -> {
 
-                    switch (result) {
-
-                        case EnrichmentResult.Success s ->
-                                producer.publish(
-                                        new StatsEnrichedEvent(
-                                                event.correlationId(),
-                                                s.text()
-                                        ),
-                                        event.platformUserHandle()
-                                );
-
-                        case EnrichmentResult.Fallback f ->
-                                producer.publish(
-                                        new StatsEnrichedEvent(
-                                                event.correlationId(),
-                                                f.text()
-                                        ),
-                                        event.platformUserHandle()
-                                );
-                    }
+                    String text = switch (result) {
+                        case EnrichmentResult.Success s -> s.text();
+                        case EnrichmentResult.Fallback f -> f.text();
+                    };
+                    producer.publish(new StatsEnrichedEvent(correlationId, text), key);
                 });
     }
 
-    public CompletionStage<EnrichmentResult> processAndReturn(StatsReadyEvent event) {
+    public CompletionStage<EnrichmentResult> processAndReturn(StatsReadyV1 event) {
         String prompt = TEST_PROMT.formatted(event.platformUserHandle());
 
         return llmClient.generate(prompt);

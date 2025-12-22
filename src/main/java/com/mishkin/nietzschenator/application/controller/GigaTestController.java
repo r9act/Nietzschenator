@@ -3,7 +3,7 @@ package com.mishkin.nietzschenator.application.controller;
 import com.mishkin.nietzschenator.application.service.StatsEnrichmentService;
 import com.mishkin.nietzschenator.domain.model.EnrichmentResult;
 import com.mishkin.nietzschenator.infrastructure.llm.gigachat.dto.response.GigaChatModelsResponse;
-import com.mishkin.nietzschenator.messaging.event.StatsReadyEvent;
+import com.mishkin.nietzschenator.messaging.event.StatsReadyV1;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,8 +30,8 @@ public class GigaTestController {
     @GetMapping("/{playerName}")
     public ResponseEntity<Void> test(@PathVariable String playerName) {
 
-        enrichmentService.process(
-                new StatsReadyEvent(
+        enrichmentService.processV1(
+                new StatsReadyV1(
                         UUID.randomUUID().toString(),
                         playerName,
                         Instant.now()
@@ -45,7 +45,7 @@ public class GigaTestController {
     public CompletionStage<ResponseEntity<String>> testSync(@PathVariable String playerName) {
 
         return enrichmentService.processAndReturn(
-                new StatsReadyEvent(
+                new StatsReadyV1(
                         "test",
                         playerName,
                         Instant.now()
