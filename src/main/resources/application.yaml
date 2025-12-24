@@ -6,8 +6,9 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.value.default.type: com.mishkin.nietzschenator.messaging.event.StatsReadyEvent
-        spring.json.trusted.packages: com.mishkin.nietzschenator.messaging.event
+        spring.json.value.default.type: com.mishkin.nietzschenator.messaging.event.envelope.EventEnvelope
+        spring.json.trusted.packages:  >
+          com.mishkin.nietzschenator.messaging.event
 
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -65,7 +66,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,metrics
+        include: health,metrics,prometheus
 
 logging:
   level:

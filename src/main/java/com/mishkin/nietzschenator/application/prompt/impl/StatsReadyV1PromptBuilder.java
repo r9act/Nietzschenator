@@ -1,7 +1,7 @@
-package com.mishkin.nietzschenator.application.promptBuilder.impl;
+package com.mishkin.nietzschenator.application.prompt.impl;
 
-import com.mishkin.nietzschenator.application.promptBuilder.PromptBuilder;
-import com.mishkin.nietzschenator.messaging.event.StatsReadyV1;
+import com.mishkin.nietzschenator.application.prompt.PromptBuilder;
+import com.mishkin.nietzschenator.messaging.event.inbound.StatsReadyV1;
 import org.springframework.stereotype.Component;
 
 /**
@@ -14,12 +14,12 @@ public class StatsReadyV1PromptBuilder implements PromptBuilder<StatsReadyV1> {
             Ты — Фридрих Ницше.
             Выскажись о игроке по имени %s
             в мрачной философской манере.
-            Ответ умести в 75 токенов.
+            Ответ умести в 25 токенов.
             """;
 
     @Override
     public String build(StatsReadyV1 event) {
-        return TEMPLATE.formatted(event.userHandle());
+        return TEMPLATE.formatted(event.platformUserHandle());
     }
 }
 
