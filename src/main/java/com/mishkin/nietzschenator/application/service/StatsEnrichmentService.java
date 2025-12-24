@@ -1,11 +1,12 @@
 package com.mishkin.nietzschenator.application.service;
 
 import com.mishkin.nietzschenator.application.port.out.LlmClient;
-import com.mishkin.nietzschenator.application.promptBuilder.PromptBuilder;
+import com.mishkin.nietzschenator.application.prompt.PromptBuilder;
 import com.mishkin.nietzschenator.domain.model.EnrichmentResult;
-import com.mishkin.nietzschenator.messaging.event.StatsEnrichedEvent;
-import com.mishkin.nietzschenator.messaging.event.StatsReadyV1;
-import com.mishkin.nietzschenator.messaging.event.StatsReadyV2;
+import com.mishkin.nietzschenator.messaging.event.envelope.EventEnvelope;
+import com.mishkin.nietzschenator.messaging.event.outbound.StatsEnrichedEvent;
+import com.mishkin.nietzschenator.messaging.event.inbound.StatsReadyV1;
+import com.mishkin.nietzschenator.messaging.event.inbound.StatsReadyV2;
 import com.mishkin.nietzschenator.messaging.producer.StatsEnrichedProducer;
 import org.springframework.stereotype.Service;
 
@@ -39,7 +40,7 @@ public class StatsEnrichmentService {
     public CompletionStage<Void> processV1(StatsReadyV1 event) {
         return generateAndPublish(
                 event.correlationId(),
-                event.userHandle(),
+                event.platformUserHandle(),
                 v1PromptBuilder.build(event)
         );
     }
@@ -60,12 +61,19 @@ public class StatsEnrichmentService {
                         case EnrichmentResult.Success s -> s.text();
                         case EnrichmentResult.Fallback f -> f.text();
                     };
-                    producer.publish(new StatsEnrichedEvent(correlationId, text), key);
+                    producer.publish(
+                            new EventEnvelope<>(
+                                    "stats.enriched",
+                                    1,
+                                    new StatsEnrichedEvent(correlationId, text)
+                            ),
+                            key
+                    );
                 });
     }
 
     public CompletionStage<EnrichmentResult> processAndReturn(StatsReadyV1 event) {
-        String prompt = TEST_PROMT.formatted(event.userHandle());
+        String prompt = TEST_PROMT.formatted(event.platformUserHandle());
 
         return llmClient.generate(prompt);
     }

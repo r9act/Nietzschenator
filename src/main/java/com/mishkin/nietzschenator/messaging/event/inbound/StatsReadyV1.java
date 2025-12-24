@@ -1,4 +1,4 @@
-package com.mishkin.nietzschenator.messaging.event;
+package com.mishkin.nietzschenator.messaging.event.inbound;
 
 import java.time.Instant;
 
@@ -7,6 +7,6 @@ import java.time.Instant;
  */
 public record StatsReadyV1(
         String correlationId,
-        String userHandle,
+        String platformUserHandle,
         Instant occurredAt
 ) {}

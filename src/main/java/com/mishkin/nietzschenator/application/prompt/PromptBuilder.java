@@ -1,4 +1,4 @@
-package com.mishkin.nietzschenator.application.promptBuilder;
+package com.mishkin.nietzschenator.application.prompt;
 
 public interface PromptBuilder<T> {
 

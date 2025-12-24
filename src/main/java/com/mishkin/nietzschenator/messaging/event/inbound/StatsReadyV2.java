@@ -1,4 +1,4 @@
-package com.mishkin.nietzschenator.messaging.event;
+package com.mishkin.nietzschenator.messaging.event.inbound;
 
 import com.mishkin.nietzschenator.messaging.event.projections.CareerRankDto;
 import com.mishkin.nietzschenator.messaging.event.projections.PlayerIdentityDto;

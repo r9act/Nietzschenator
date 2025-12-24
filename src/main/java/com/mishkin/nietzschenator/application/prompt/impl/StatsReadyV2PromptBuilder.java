@@ -1,7 +1,7 @@
-package com.mishkin.nietzschenator.application.promptBuilder.impl;
+package com.mishkin.nietzschenator.application.prompt.impl;
 
-import com.mishkin.nietzschenator.application.promptBuilder.PromptBuilder;
-import com.mishkin.nietzschenator.messaging.event.StatsReadyV2;
+import com.mishkin.nietzschenator.application.prompt.PromptBuilder;
+import com.mishkin.nietzschenator.messaging.event.inbound.StatsReadyV2;
 import org.springframework.stereotype.Component;
 
 /**
