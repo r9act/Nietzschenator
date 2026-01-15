@@ -5,6 +5,7 @@ import com.mishkin.nietzschenator.application.service.StatsEnrichmentService;
 import com.mishkin.nietzschenator.messaging.event.envelope.EventEnvelope;
 import com.mishkin.nietzschenator.messaging.event.inbound.StatsReadyV1;
 import com.mishkin.nietzschenator.messaging.event.inbound.StatsReadyV2;
+import com.mishkin.nietzschenator.messaging.idempotancy.DedupStore;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -16,10 +17,12 @@ public class StatsReadyEventListener {
 
     private final StatsEnrichmentService service;
     private final ObjectMapper objectMapper;
+    private final DedupStore dedupStore;
 
-    public StatsReadyEventListener(StatsEnrichmentService service, ObjectMapper objectMapper) {
+    public StatsReadyEventListener(StatsEnrichmentService service, ObjectMapper objectMapper, DedupStore dedupStore) {
         this.service = service;
         this.objectMapper = objectMapper;
+        this.dedupStore = dedupStore;
     }
 
     @KafkaListener(topics = "stats.ready", groupId = "nietzschenator")
@@ -31,6 +34,9 @@ public class StatsReadyEventListener {
                         envelope.payload(),
                         StatsReadyV1.class
                 );
+                if (!dedupStore.claim(v1.correlationId())) {
+                    return;
+                }
                 service.processV1(v1);
             }
 
@@ -39,6 +45,9 @@ public class StatsReadyEventListener {
                         envelope.payload(),
                         StatsReadyV2.class
                 );
+                if (!dedupStore.claim(v2.correlationId())) {
+                    return;
+                }
                 service.processV2(v2);
             }
 
